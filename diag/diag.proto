@@ -21,6 +21,7 @@ syntax = "proto3";
 package gnoi.diag;
 
 import "github.com/openconfig/gnoi/types/types.proto";
+import "github.com/openconfig/gnoi/common/common.proto";
 
 option (types.gnoi_version) = "0.1.0";
 
@@ -85,6 +86,13 @@ service Diag {
   rpc GetBERTResult(GetBERTResultRequest) returns(GetBERTResultResponse) {}
 
   // TODO(aghaffar): Add BURNIN related RPCs.
+  //avpathak
+  rpc Debug(DebugRequest) returns (stream DebugResponse) {}
+  // Debug sends a debug request to the device which will start log collection
+  // on the target device , save it in a compressed file, upload it to the target
+  // server and in response send the tgz file name taken out of the device and 
+  // path of the target where the file is uploaded
+
 }
 
 // Common sequence generating monic polynomials used for PRBS.
@@ -248,4 +256,27 @@ message GetBERTResultResponse {
   }
   // Captures the BERT results on a per-port basis.
   repeated PerPortResponse per_port_responses = 1;
+}
+//A DebugRequest specifies the module for which the logs needs to be collected
+//along with the list of custom traces to be taken and the remote server address
+//where the tgz file has be placed and the details where the file has to be uploaded
+message DebugRequest {
+  //specify the module to be debugged on the target
+  string debug_module = 1;
+  //optional specify a list of commands to be passed  
+  repeated types.Path debug_command = 2;
+  //ip address or DNS hostname of the remote server to upload file from remote device
+  string ip_address = 3;
+  // Details to upload the remote file being requested to a remote location.
+  common.RemoteDownload remote_upload = 5;
+}
+//A DebugResponse contains path of the remote file on target, file name on the target,
+//file contents in binary format and hash of the data received 
+message DebugResponse {
+  oneof response {
+    string remote_file = 1;
+    string remote_file_path = 2;
+    bytes contents = 3;
+    types.HashType hash = 2; // hash of the file.
+  }
 }
